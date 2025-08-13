@@ -1,0 +1,32 @@
+name: Flujo_trabajo
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  example-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Use GITHUB_TOKEN
+        run: |
+          echo "Llamando a /user/repos con GITHUB_TOKEN..."
+          http_code=$(curl -s -o response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/user/repos)
+
+          echo "HTTP_CODE=$http_code"
+          echo "Primeros 500 caracteres de la respuesta:"
+          head -c 500 response.json || true
+
+          if [ "$http_code" -ge 400 ]; then
+            echo "La llamada falló. Revisa permisos de GITHUB_TOKEN o usa un PAT."
+            exit 1
+          fi
